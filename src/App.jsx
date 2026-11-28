@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { equipmentData } from "./data/assets";
+import { initialAssets } from "./data/assets";
 import "./App.css";
 
 function evaluateRisk(asset) {
@@ -9,24 +9,24 @@ function evaluateRisk(asset) {
   if (asset.temperature >= 90) {
     score += 3;
     reasons.push("High temperature");
-  } else if (asset.temperature >= 80) {
+  } else if (asset.temperature >= 75) {
     score += 2;
     reasons.push("Elevated temperature");
-  } else if (asset.temperature >= 70) {
+  } else if (asset.temperature >= 60) {
     score += 1;
   }
 
-  if (asset.vibration >= 6) {
+  if (asset.vibration >= 8) {
     score += 3;
     reasons.push("High vibration");
-  } else if (asset.vibration >= 4) {
+  } else if (asset.vibration >= 5) {
     score += 2;
     reasons.push("Elevated vibration");
   } else if (asset.vibration >= 3) {
     score += 1;
   }
 
-  if (asset.runtime >= 4000) {
+  if (asset.runtime >= 5000) {
     score += 2;
     reasons.push("High runtime");
   } else if (asset.runtime >= 3000) {
@@ -35,9 +35,13 @@ function evaluateRisk(asset) {
 
   let status = "Healthy";
 
-  if (score >= 6) status = "Maintenance Due";
-  else if (score >= 4) status = "At-Risk";
-  else if (score >= 2) status = "Watch";
+  if (asset.status === "maintenance" || score >= 6) {
+    status = "Maintenance Due";
+  } else if (asset.status === "at-risk" || score >= 4) {
+    status = "At-Risk";
+  } else if (asset.status === "watch" || score >= 2) {
+    status = "Watch";
+  }
 
   return {
     status,
@@ -50,7 +54,11 @@ function evaluateRisk(asset) {
 }
 
 function StatusBadge({ status }) {
-  return <span className={`badge ${status.toLowerCase().replaceAll(" ", "-")}`}>{status}</span>;
+  return (
+    <span className={`badge ${status.toLowerCase().replaceAll(" ", "-")}`}>
+      {status}
+    </span>
+  );
 }
 
 function AssetCard({ asset }) {
@@ -99,12 +107,15 @@ function KanbanColumn({ title, description, assets }) {
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
+
         <span className="count">{assets.length}</span>
       </div>
 
       <div className="cards">
         {assets.length > 0 ? (
-          assets.map((asset) => <AssetCard key={asset.id} asset={asset} />)
+          assets.map((asset) => (
+            <AssetCard key={asset.id} asset={asset} />
+          ))
         ) : (
           <div className="empty">No assets in this category</div>
         )}
@@ -114,7 +125,7 @@ function KanbanColumn({ title, description, assets }) {
 }
 
 export default function App() {
-  const [assets, setAssets] = useState(equipmentData);
+  const [assets, setAssets] = useState(initialAssets);
   const [view, setView] = useState("dashboard");
 
   const evaluatedAssets = useMemo(
@@ -139,7 +150,7 @@ export default function App() {
       current.map((asset) => ({
         ...asset,
         temperature: Math.max(
-          45,
+          30,
           Math.min(
             105,
             asset.temperature + Math.round((Math.random() - 0.5) * 12)
@@ -268,7 +279,9 @@ export default function App() {
               <div className="section-heading">
                 <div>
                   <h2>Maintenance Alerts</h2>
-                  <p>Equipment requiring attention based on current readings.</p>
+                  <p>
+                    Equipment requiring attention based on current readings.
+                  </p>
                 </div>
 
                 <span className="alert-count">
@@ -284,6 +297,7 @@ export default function App() {
                         <strong>
                           {asset.name} ({asset.id})
                         </strong>
+
                         <span>{asset.reason}</span>
                       </div>
 
@@ -293,7 +307,8 @@ export default function App() {
                 </div>
               ) : (
                 <div className="no-alerts">
-                  All equipment is currently operating within acceptable limits.
+                  All equipment is currently operating within acceptable
+                  limits.
                 </div>
               )}
             </section>
@@ -339,6 +354,7 @@ export default function App() {
                       <strong>
                         {asset.name} ({asset.id})
                       </strong>
+
                       <span>
                         Temperature: {asset.temperature}°C · Vibration:{" "}
                         {asset.vibration} mm/s · Runtime: {asset.runtime} h
@@ -350,7 +366,9 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div className="no-alerts">No active maintenance alerts.</div>
+              <div className="no-alerts">
+                No active maintenance alerts.
+              </div>
             )}
           </section>
         )}
